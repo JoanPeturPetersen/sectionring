@@ -1,0 +1,78 @@
+
+
+<html>
+<head>
+<style type="text/css">
+   p.drawing {border-width: 4; border: solid; border-color:green; text-align: center}
+ </style>
+</head>
+
+<body>
+
+<form name='inputs'>
+Inner radius: <input type="text" size="4" value="80" name="inner_radius"> mm<br>
+Outer radius: <input type="text" size="4" value="100" name="outer_radius">  mm<br>
+Stroke width:  <input type="text" size="4" value="0.1" name="stroke_width">  mm<br>
+</form>
+<button type="button" onclick="displayPart()">Draw</button><br>
+
+<textarea id="textbox" rows="8">
+</textarea>
+
+<p id="drawing" class="drawing">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="300mm" width="300mm" viewbox="0 0 300 300">
+</svg>
+</p>
+
+
+
+<script>
+function replaceAll(txt, replace, with_this) {
+  return txt.replace(new RegExp(replace, 'g'), with_this);
+}
+
+function displayPart()
+{
+//var x = document.getElementById("original");
+//var s = x.innerHTML;
+s = ' \
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="WIDTH" \
+   height="HEIGHT" \
+   viewBox="0 0 300 300"> \
+   <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
+        fill="none" stroke="blue" stroke-width="SCALEDSW" transform="scale(SCALE,SCALE)"/> \
+   <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
+        fill="none" stroke="blue" stroke-width="SCALEDSW" transform="translate(R2,R2) rotate(90,0,0) scale(SCALE,SCALE) "/> \
+   <path d="M0,0 \
+            aR2,R2 0 0,1 R2,R2" \
+        fill="none" stroke="blue" stroke-width="SW" /> \
+   <path d="M0,DIFF \
+            aR1,R1 0 0,1 R1,R1" \
+        fill="none" stroke="blue" stroke-width="SW" /> \
+</svg> \
+'
+
+var sw = 0.1
+var f = document.forms['inputs'];
+var r1 = parseFloat(f["inner_radius"].value);
+var r2 = parseFloat(f["outer_radius"].value);
+var sw = parseFloat(f["stroke_width"].value);
+var diff = r2 - r1
+var scale = diff/10
+var scaledsw = sw / scale
+s = s.replace("HEIGHT", "300mm");
+s = s.replace("WIDTH", "300mm"); 
+s = replaceAll(s, "R1", r1);
+s = replaceAll(s, "R2", r2);
+s = replaceAll(s, "SCALEDSW", scaledsw);
+s = replaceAll(s, "SW", sw);
+s = replaceAll(s, "SCALE", scale);
+s = replaceAll(s, "DIFF", diff);
+document.getElementById("textbox").innerHTML = s;
+document.getElementById("drawing").innerHTML = s;
+//x.style.display="block";
+}
+</script>
+
+</body>
+</html>
