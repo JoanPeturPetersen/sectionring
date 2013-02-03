@@ -3,20 +3,36 @@
 <html>
 <head>
 <style type="text/css">
-   p.drawing {border-width: 4; border: solid; border-color:green; text-align: center}
+    p.drawing {border-width: 4; border: solid; border-color:green; text-align: center}
+
+    #inputArea
+    {
+        font-family: Arial, Sans-Serif;
+        font-size: 13px;
+        background-color: #d6e5f4;
+        padding: 10px;
+    }
  </style>
 </head>
 
 <body>
 
-<form name='inputs'>
+<p>
+Fill in the following fields. The <i>inner</i> and <i>outer diameter</i> specify
+the radii of the round edges of the ring. The <i>stroke width</i> gives the line
+with to use. For laser cutting it is common to use some predefined thickness.
+Note that if the stroke width is set to a very small value, the browser might not render the part.
+</p>
+
+<form id="inputArea" name='inputs'>
 Inner radius: <input type="text" size="4" value="80" name="inner_radius"> mm<br>
 Outer radius: <input type="text" size="4" value="100" name="outer_radius">  mm<br>
-Stroke width:  <input type="text" size="4" value="0.1" name="stroke_width">  mm<br>
-</form>
+Stroke width:  <input type="text" size="4" value="0.1" name="stroke_width">  mm
 <button type="button" onclick="displayPart()">Draw</button><br>
+</form>
 
-<textarea id="textbox" rows="8">
+Copy this text field and save it to a file with a .SVG extension.
+<textarea id="textbox" rows="2" cols="80">
 </textarea>
 
 <p id="drawing" class="drawing">
@@ -32,46 +48,68 @@ function replaceAll(txt, replace, with_this) {
 }
 
 function displayPart()
-{
-//var x = document.getElementById("original");
-//var s = x.innerHTML;
-s = ' \
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="WIDTH" \
-   height="HEIGHT" \
-   viewBox="0 0 300 300"> \
-   <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
-        fill="none" stroke="blue" stroke-width="SCALEDSW" transform="scale(SCALE,SCALE)"/> \
-   <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
-        fill="none" stroke="blue" stroke-width="SCALEDSW" transform="translate(R2,R2) rotate(90,0,0) scale(SCALE,SCALE) "/> \
-   <path d="M0,0 \
-            aR2,R2 0 0,1 R2,R2" \
-        fill="none" stroke="blue" stroke-width="SW" /> \
-   <path d="M0,DIFF \
-            aR1,R1 0 0,1 R1,R1" \
-        fill="none" stroke="blue" stroke-width="SW" /> \
-</svg> \
-'
+    {
+        // This is the part itself::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        s = ' \
+        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="WIDTH" \
+           height="HEIGHT" \
+           viewBox="0 0 300 300"> \
+           <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
+                fill="none" stroke="blue" stroke-width="SCALEDSW" transform="scale(SCALE,SCALE)"/> \
+           <path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" \
+                fill="none" stroke="blue" stroke-width="SCALEDSW" transform="translate(R2,R2) rotate(90,0,0) scale(SCALE,SCALE) "/> \
+           <path d="M0,0 \
+                    aR2,R2 0 0,1 R2,R2" \
+                fill="none" stroke="blue" stroke-width="SW" /> \
+           <path d="M0,DIFF \
+                    aR1,R1 0 0,1 R1,R1" \
+                fill="none" stroke="blue" stroke-width="SW" /> \
+        </svg> \
+        '
+        // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-var sw = 0.1
-var f = document.forms['inputs'];
-var r1 = parseFloat(f["inner_radius"].value);
-var r2 = parseFloat(f["outer_radius"].value);
-var sw = parseFloat(f["stroke_width"].value);
-var diff = r2 - r1
-var scale = diff/10
-var scaledsw = sw / scale
-s = s.replace("HEIGHT", "300mm");
-s = s.replace("WIDTH", "300mm"); 
-s = replaceAll(s, "R1", r1);
-s = replaceAll(s, "R2", r2);
-s = replaceAll(s, "SCALEDSW", scaledsw);
-s = replaceAll(s, "SW", sw);
-s = replaceAll(s, "SCALE", scale);
-s = replaceAll(s, "DIFF", diff);
-document.getElementById("textbox").innerHTML = s;
-document.getElementById("drawing").innerHTML = s;
-//x.style.display="block";
-}
+        var sw = 0.1
+        var f = document.forms['inputs'];
+        var r1 = parseFloat(f["inner_radius"].value);
+        var r2 = parseFloat(f["outer_radius"].value);
+        var sw = parseFloat(f["stroke_width"].value);
+        // Validate input
+        if (r1>r2)
+            {
+                alert('Inner radius must be smaller or equal than outer radius.');
+                return;
+            }
+        if (r1<0)
+            {
+                alert('Inner radius must be larger or equal to zero.');
+                return;
+            }
+        if (r2<0)
+            {
+                alert('Outer radius must be larger or equal to zero.');
+                return;
+            }
+        if (sw<=0)
+            {
+                alert('Stroke width must be larger than zero.');
+                return;
+            }
+        var diff = r2 - r1
+        var scale = diff/10
+        var scaledsw = sw / scale
+        s = s.replace("HEIGHT", "300mm");
+        s = s.replace("WIDTH", "300mm"); 
+        s = replaceAll(s, "R1", r1);
+        s = replaceAll(s, "R2", r2);
+        s = replaceAll(s, "SCALEDSW", scaledsw);
+        s = replaceAll(s, "SW", sw);
+        s = replaceAll(s, "SCALE", scale);
+        s = replaceAll(s, "DIFF", diff);
+        document.getElementById("textbox").innerHTML = s;
+        document.getElementById("drawing").innerHTML = s;
+        //x.style.display="block";
+    }
+window.onload=displayPart();
 </script>
 
 </body>
