@@ -46,17 +46,19 @@ Stroke width:  <input type="text" size="4" value="0.1" name="stroke_width">  mm
 
 <p>
 Copy this text field and save it to a file with a .SVG extension.
-<textarea id="textbox" rows="2" cols="80">
-</textarea>
 Note: The SVG seems to work with Chrome and Inkscape. The stroke width seems
 to be interpreted incorrectly by Adobe Illustrator, so be aware.
 </p>
+<textarea id="textbox" rows="4" cols="80">
+</textarea>
 
 <p id="drawing" class="drawing">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" height="300mm" width="300mm" viewbox="0 0 300 300">
 </svg>
 </p>
 
+There is 5 mm between the blue grid lines. You might know them from old school
+paper blocks :)
 
 <script>
 function replaceAll(txt, replace, with_this) {
@@ -64,34 +66,69 @@ function replaceAll(txt, replace, with_this) {
     return txt.replace(new RegExp(replace, 'g'), with_this);
 }
 
+function makeGrid(width, height) {
+    // Make a 1 cm grid in SVG
+    // Width and height given in millimeters
+    var wi, hi, svg;
+    var grid_size = 5; // in mm
+    wi = Math.floor(width / grid_size);
+    hi = Math.floor(height / grid_size);
+    svg = '<g style="stroke:rgb(0,0,255);stroke-width:0.1">';
+    for (var i=0; i<wi; i++) {
+        svg += '<line x1="' + i * grid_size + '" y1="0" x2="' + i * grid_size + '" y2="'+ height +'" />';
+    }
+    for (var j=0; j<hi; j++) {
+        svg += '<line x1="0" y1="' + j * grid_size + '" x2="' + width + '" y2="' + j * grid_size + '" />';
+    }
+    svg += '</g>';
+    return svg;
+}
+
+function getPart(width, height, r1, r2, sw) {
+    "use strict";
+    /*jslint browser:true */
+    var s, diff, scale, scaledsw;
+    // This is the part itself::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    s = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="_WIDTH_" ' +
+        'height="_HEIGHT_" ' +
+        'viewBox="0 0 300 300"> ' +
+        '<path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" ' +
+        '    fill="none" stroke="black" stroke-width="_SCALEDSW_" ' +
+        '    transform="scale(_SCALE_,_SCALE_)"/> ' +
+        '<path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" ' +
+        '    fill="none" stroke="black" stroke-width="_SCALEDSW_" ' +
+        '    transform="translate(_R2_,_R2_) rotate(90,0,0) scale(_SCALE_,_SCALE_) "/> ' +
+        '<path d="M0,0 ' +
+        '         a_R2_,_R2_ 0 0,1 _R2_,_R2_" ' +
+        '      fill="none" stroke="black" stroke-width="_SW_" /> ' +
+        '<path d="M0,_DIFF_ ' +
+        '         a_R1_,_R1_ 0 0,1 _R1_,_R1_" ' +
+        '      fill="none" stroke="black" stroke-width="_SW_" /> ' +
+        '</svg>';
+        // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    diff = r2 - r1;
+    scale = diff / 10;
+    scaledsw = sw / scale;
+    s = s.replace("_HEIGHT_", height);
+    s = s.replace("_WIDTH_", width);
+    s = replaceAll(s, "_R1_", r1);
+    s = replaceAll(s, "_R2_", r2);
+    s = replaceAll(s, "_SCALEDSW_", scaledsw);
+    s = replaceAll(s, "_SW_", sw);
+    s = replaceAll(s, "_SCALE_", scale);
+    s = replaceAll(s, "_DIFF_", diff);
+    return s;
+}
+
 function displayPart() {
     "use strict";
     /*jslint browser:true */
-    var s, f, r1, r2, sw, diff, scale, scaledsw;
-    // This is the part itself::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    s = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="WIDTH" ' +
-        'height="HEIGHT" ' +
-        'viewBox="0 0 300 300"> ' +
-        '<path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" ' +
-        '    fill="none" stroke="blue" stroke-width="SCALEDSW" ' +
-        '    transform="scale(SCALE,SCALE)"/> ' +
-        '<path d="M0,0 l0,3.5 l2,-1 l2,1 l0,3 l-2,1 l-2,-1 l0,3.5" ' +
-        '    fill="none" stroke="blue" stroke-width="SCALEDSW" ' +
-        '    transform="translate(R2,R2) rotate(90,0,0) scale(SCALE,SCALE) "/> ' +
-        '<path d="M0,0 ' +
-        '         aR2,R2 0 0,1 R2,R2" ' +
-        '      fill="none" stroke="blue" stroke-width="SW" /> ' +
-        '<path d="M0,DIFF ' +
-        '         aR1,R1 0 0,1 R1,R1" ' +
-        '      fill="none" stroke="blue" stroke-width="SW" /> ' +
-        '</svg>';
-        // :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
+    var f, r1, r2, sw, display_part;
+    // Validate input
     f = document.forms.inputs;
     r1 = parseFloat(f.inner_radius.value);
     r2 = parseFloat(f.outer_radius.value);
     sw = parseFloat(f.stroke_width.value);
-    // Validate input
     if (r1 > r2) {
         alert('Inner radius must be smaller or equal than outer radius.');
         return;
@@ -108,19 +145,11 @@ function displayPart() {
         alert('Stroke width must be larger than zero.');
         return;
     }
-    diff = r2 - r1;
-    scale = diff / 10;
-    scaledsw = sw / scale;
-    s = s.replace("HEIGHT", "300mm");
-    s = s.replace("WIDTH", "300mm");
-    s = replaceAll(s, "R1", r1);
-    s = replaceAll(s, "R2", r2);
-    s = replaceAll(s, "SCALEDSW", scaledsw);
-    s = replaceAll(s, "SW", sw);
-    s = replaceAll(s, "SCALE", scale);
-    s = replaceAll(s, "DIFF", diff);
-    document.getElementById("textbox").innerHTML = s;
-    document.getElementById("drawing").innerHTML = s;
+    document.getElementById("textbox").innerHTML = getPart("300mm", "300mm", r1, r2, sw);
+    display_part = getPart("600px", "600px", r1, r2, sw);
+    display_part = replaceAll(display_part, "</svg>", makeGrid(300,300));
+    display_part += '</svg>';
+    document.getElementById("drawing").innerHTML = display_part;
     //x.style.display="block";
 }
 window.onload=displayPart();
